@@ -1,0 +1,47 @@
+---
+title: "Single-season occupancy modeling"
+output: html_notebook
+---
+##Working through the single-season occupancy code in Chapter 6 of CTFWR
+
+Step 1. Source the team library and install packages
+```{r}
+rm(list = ls())
+source("Book material/Chapter 5/TEAM library 1.7.R")
+library(chron) 
+library(reshape)
+library(ggplot2)
+library(vegan)
+library(unmarked)
+library(AICcmodavg)
+library(MuMIn)
+library(plyr)
+#library(R2jags) error loading package
+```
+Step 2. Load the data
+```{r}
+team_data<-read.csv("Book material/Chapter 5/teamexample.csv", sep = ",", h = T, stringsAsFactors = F)
+iucn<-read.csv("Book material/Chapter 5/IUCN.csv", sep = ",", h = T)
+```
+Step 3. Merge iucn with team_data and select 2009 data.
+```{r}
+team<- merge(iucn, team_data, all.y = T)
+fd<-fix.dta(team) #this is one of their home-grown functions; not sure what it does; something about fixing dates
+yr2009<-fd[fd$Sampling.Event =="2009.01" & fd$Class == "MAMMALIA",]
+```
+Step 4. Load covariates list and remove broken cameras from list.
+```{r}
+cov<-read.table("Book material/Chapter 6/covariates.txt", header = TRUE)
+workingcam<-which(cov$Sampling.Unit.Name %in% unique(yr2009$Sampling.Unit.Name))
+```
+Step 5. Load and correct both numeric and categorical variables
+```{r}
+cov.or<-cov[workingcam,]
+cov.num<-cov[,sapply(cov,is.numeric)]
+cov.std<-decostand(cov.num, method = "standardize") #scales numerical covariates to zero mean and unit variance (z scores!)
+cov.fac<-cov[,sapply(cov,is.factor)]
+covs<-data.frame(cov.std, cov.fac)
+```
+
+
+
